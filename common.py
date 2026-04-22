@@ -19,30 +19,30 @@ DEFAULT_RECORDINGS_CANDIDATES = [
     Path(
         os.environ.get(
             "SUPERWHISPER_RECORDINGS_DIR",
-            "/Users/davidvictor/Dropbox/My Mac (Superfly.attlocal.net)/Documents/superwhisper/recordings",
+            str(Path.home() / "Documents" / "superwhisper" / "recordings"),
         )
     ),
-    Path.home() / "Documents" / "superwhisper" / "recordings",
+    Path.home() / "Library" / "Application Support" / "superwhisper" / "recordings",
 ]
 
 DEFAULT_EXPORT_ROOT = Path(
     os.environ.get(
         "SUPERWHISPER_EXPORT_ROOT",
-        "/Users/davidvictor/Dropbox/My Mac (Superfly.attlocal.net)/Documents/superwhisper_exports",
+        str(Path.home() / "Documents" / "superwhisper_exports"),
     )
 )
 
 DEFAULT_MODES_DIR = Path(
     os.environ.get(
         "SUPERWHISPER_MODES_DIR",
-        "/Users/davidvictor/Dropbox/My Mac (Superfly.attlocal.net)/Documents/superwhisper/modes",
+        str(Path.home() / "Documents" / "superwhisper" / "modes"),
     )
 )
 
 DEFAULT_SETTINGS_PATH = Path(
     os.environ.get(
         "SUPERWHISPER_SETTINGS_PATH",
-        "/Users/davidvictor/Dropbox/My Mac (Superfly.attlocal.net)/Documents/superwhisper/settings/settings.json",
+        str(Path.home() / "Documents" / "superwhisper" / "settings" / "settings.json"),
     )
 )
 

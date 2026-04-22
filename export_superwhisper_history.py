@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import os
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
@@ -12,12 +13,20 @@ from typing import Any
 
 
 DEFAULT_RECORDINGS_CANDIDATES = [
-    Path("/Users/davidvictor/Dropbox/My Mac (Superfly.attlocal.net)/Documents/superwhisper/recordings"),
-    Path.home() / "Documents" / "superwhisper" / "recordings",
+    Path(
+        os.environ.get(
+            "SUPERWHISPER_RECORDINGS_DIR",
+            str(Path.home() / "Documents" / "superwhisper" / "recordings"),
+        )
+    ),
+    Path.home() / "Library" / "Application Support" / "superwhisper" / "recordings",
 ]
 
 DEFAULT_EXPORT_ROOT = Path(
-    "/Users/davidvictor/Dropbox/My Mac (Superfly.attlocal.net)/Documents/superwhisper_exports"
+    os.environ.get(
+        "SUPERWHISPER_EXPORT_ROOT",
+        str(Path.home() / "Documents" / "superwhisper_exports"),
+    )
 )
 
 

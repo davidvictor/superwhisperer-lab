@@ -1,7 +1,7 @@
 [project]
 name = "superwhisperer-lab"
 version = "0.1.0"
-description = "Private tooling for exporting, replaying, and comparing Superwhisper transcript modes."
+description = "Tooling for exporting, batch-replaying, and comparing Superwhisper transcript modes across custom prompts."
 requires-python = ">=3.11"
 
 [tool.setuptools]

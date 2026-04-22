@@ -1,118 +1,176 @@
-# Superwhisperer Lab
+```
+                                        __    _                     
+   _______  ______  ___  ______      __/ /_  (_)________  ___  _____
+  / ___/ / / / __ \/ _ \/ ___/ | /| / / __ \/ / ___/ __ \/ _ \/ ___/
+ (__  ) /_/ / /_/ /  __/ /   | |/ |/ / / / / (__  ) /_/ /  __/ /    
+/____/\__,_/ .___/\___/_/    |__/|__/_/ /_/_/____/ .___/\___/_/     
+          /_/                                   /_/                  
+    __      __  
+   / /___ _/ /_ 
+  / / __ `/ __ \
+ / / /_/ / /_/ /
+/_/\__,_/_.___/ 
+```
 
-Superwhisperer Lab is a private utility repo for working with local Superwhisper history as a prompt-and-mode evaluation system.
+# superwhisper-lab
 
-It does four main things:
+> A CLI toolkit for benchmarking Superwhisper custom modes against your own voice recording history — export, replay, score, and compare prompt outputs side by side.
 
-- exports local Superwhisper transcript history into eval-friendly files
-- syncs Superwhisper custom modes from editable markdown prompts
-- runs one-mode-at-a-time batch reprocessing through the real Superwhisper app
-- compares outputs side by side across multiple mode runs
+## The Problem
 
-The important workflow detail is that Superwhisper mode deployment has two parts:
+[Superwhisper](https://superwhisper.com/) lets you define custom modes: different LLM prompts that rewrite your dictation for different contexts — engineering notes, product thinking, email drafts. Writing a prompt is easy. Knowing whether it's actually working is not.
 
-1. write the mode JSON files into the live `modes/` folder
-2. register those mode keys in `settings.json` so they appear in the UI
+The feedback loop is broken. You dictate, glance at the output, and move on. You might notice a mode feels better, or worse, but you have no systematic way to verify that impression across a real corpus of your own speech. Tweaking a prompt feels like adjusting in the dark.
 
-This repo now handles both.
+The second problem is operational: Superwhisper's mode deployment has two steps — write the mode JSON file, then register the mode key in `settings.json`. Miss the second step and your mode silently disappears from the UI. There's no built-in way to manage this from editable source files.
 
-## Repo Layout
+## Why I Built This
 
-- `common.py`
-  Shared path, config, and JSON helpers.
-- `export_superwhisper_history.py`
-  Exports local history into JSONL, CSV, and markdown bundles.
-- `sync_superwhisper_modes.py`
-  Writes live Superwhisper mode JSON files from `mode_specs.json` and the prompt markdown files, then updates `settings.json` `modeKeys` so the modes show up in the app UI.
-- `run_superwhisper_queue.py`
-  Drives the real Superwhisper app one mode at a time over a chosen transcript set.
-- `evaluate_superwhisper_run.py`
-  Rehydrates finished outputs from live `meta.json` files, scores them heuristically, and generates a side-by-side HTML compare view.
-- `mode_specs.json`
-  Declarative local mode configuration.
-- `prompts/`
-  Prompt text for the current mode set.
+The insight behind this repo is simple: you already have the eval corpus. Every recording you've ever made is sitting in Superwhisper's local history, with the raw transcript, the rewritten output, the mode name, and the audio file. That's a ground-truth dataset of your actual voice patterns.
 
-## Working Model
+Instead of testing prompt changes against synthetic examples, this tooling replays your real recordings through the Superwhisper app itself, one mode at a time, then scores the outputs using a deterministic heuristic that measures content recall, filler removal, length appropriateness, and structural quality. The score isn't a substitute for reading the output — it's a signal that tells you where to look in the side-by-side comparison.
 
-The safest operating mode is:
+The longer goal is a periodic self-improvement loop: export a fresh slice of recent recordings, run them through your current mode set, score and compare, tune the prompts, repeat. Each iteration tightens alignment between how you actually speak and how your modes render it.
 
-1. export a clean source corpus
-2. run one mode per batch
-3. compare multiple run folders together
+Built during a focused lab sprint, published because the workflow generalizes to anyone running custom Superwhisper modes seriously.
 
-This avoids the fragility of trying to switch modes repeatedly inside one long mixed-mode batch.
+## What It Does
+
+Four scripts, each with a distinct job:
+
+- **`export_superwhisper_history.py`** — Walks Superwhisper's local recordings folder and exports your history to JSONL, CSV, and per-recording Markdown files. Produces a timestamped export bundle you can use as a stable eval corpus.
+
+- **`sync_superwhisper_modes.py`** — Reads `mode_specs.json` and the prompt Markdown files, writes the live Superwhisper mode JSON files, and updates `settings.json` `modeKeys` so modes appear in the UI. Handles both steps atomically.
+
+- **`run_superwhisper_queue.py`** — Drives the real Superwhisper desktop app to reprocess audio files one mode at a time. Matches output recordings by duration and raw transcript fingerprint. Writes a JSONL results log and per-task Markdown outputs.
+
+- **`evaluate_superwhisper_run.py`** — Rehydrates results from live `meta.json` files, scores each output against the source transcript on six heuristic dimensions, and generates a side-by-side HTML comparison across all modes in a run.
+
+## How It Works
+
+The evaluation is deterministic and dependency-free. For each source/output pair, the scorer measures:
+
+- **Content recall** — what fraction of the source's content words appear in the output
+- **Special token recall** — how well URLs, identifiers, CLI flags, and capitalized terms survive the rewrite
+- **Filler cleanup** — how much dictation noise (um, uh, basically, like) was removed
+- **Length ratio** — whether the output is appropriately compressed or expanded for the mode type
+- **Structure score** — capitalization, sentence endings, paragraph breaks
+- **Repetition penalty** — consecutive repeated words in the output
+
+The overall score (0–100) is a weighted composite. It's not a truth oracle — it's a fast signal to prioritize which rows in the side-by-side HTML are worth reading carefully.
 
 ## Quick Start
 
-Sync modes:
+**1. Configure your paths**
+
+Copy the example env file and set paths if your Superwhisper data isn't in the default location:
+
+```bash
+cp env.example .env
+# edit .env if needed — defaults point to ~/Documents/superwhisper/
+```
+
+**2. Sync your modes**
 
 ```bash
 python3 sync_superwhisper_modes.py
 ```
 
-That command now does the full app-aware sync:
+This writes the mode JSON files and registers them in `settings.json`. If Superwhisper is open, quit and reopen it after syncing.
 
-- writes the live mode JSON files
-- registers the mode keys in Superwhisper `settings.json`
-
-If the app is already open, quit and reopen Superwhisper after syncing.
-
-Export local history:
+**3. Export your recording history**
 
 ```bash
 python3 export_superwhisper_history.py
 ```
 
-Run a single mode over the latest exported corpus:
+Writes a timestamped bundle to `~/Documents/superwhisper_exports/export-YYYYMMDD-HHMMSS/`.
+
+**4. Run a mode over recent recordings**
 
 ```bash
 python3 run_superwhisper_queue.py --sample-mode recent --limit 25 --mode-key engineering
 ```
 
-Compare multiple runs:
+Run once per mode. Each mode gets its own run folder under `runs/`.
+
+**5. Compare runs**
 
 ```bash
 python3 evaluate_superwhisper_run.py \
-  /path/to/run-engineering \
-  /path/to/run-productdesign \
-  /path/to/run-emailcommunication
+  runs/run-engineering \
+  runs/run-productdesign \
+  runs/run-emailcommunication
 ```
 
-The compare command writes:
+Writes to `comparisons/compare-YYYYMMDD-HHMMSS__*/`:
 
-- `heuristic_summary.json`
-- `heuristic_scores.csv`
-- `side_by_side.csv`
-- `side_by_side.html`
+- `side_by_side.html` — full comparison table, one row per source recording
+- `heuristic_summary.json` — per-mode and per-run average scores
+- `heuristic_scores.csv` — raw scores for every task
+- `side_by_side.csv` — flat export of the comparison table
 
-## Local Configuration
+## Usage
 
-This repo is intentionally private and machine-local in spirit.
+**Sync only specific modes:**
 
-`mode_specs.json` can contain personal filesystem paths for:
+```bash
+python3 sync_superwhisper_modes.py --mode-key engineering --mode-key emailcommunication
+```
 
-- Superwhisper mode files
-- Superwhisper settings file
-- prompt locations
+**Dry run (preview writes without touching files):**
 
-The scripts also use the local default Superwhisper paths in `common.py` unless you override them.
+```bash
+python3 sync_superwhisper_modes.py --dry-run
+```
 
-You can also override those paths with env vars:
+**Run a random sample:**
 
-- `SUPERWHISPER_MODES_DIR`
-- `SUPERWHISPER_SETTINGS_PATH`
-- `SUPERWHISPER_RECORDINGS_DIR`
-- `SUPERWHISPER_EXPORT_ROOT`
+```bash
+python3 run_superwhisper_queue.py --sample-mode random --limit 20 --mode-key productdesign
+```
 
-## Current Guidance
+**Evaluate a single run in place:**
 
-- Treat `llmResult` as the primary rewritten output when present.
-- Treat `result` as the fallback when `llmResult` is empty.
-- Refresh compare output from live `meta.json` before judging a run.
-- When modes are missing from the UI, check `settings.json` `modeKeys` before assuming the mode files are wrong.
-- Keep generated run artifacts out of git.
+```bash
+python3 evaluate_superwhisper_run.py runs/run-engineering
+```
 
-## Status
+## Configuration
 
-This repo was spun out from a local exploratory lab under the default workspace and packaged as a standalone private repo candidate.
+**Environment variables** (all optional — see `env.example`):
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SUPERWHISPER_RECORDINGS_DIR` | `~/Documents/superwhisper/recordings` | Superwhisper's recordings folder |
+| `SUPERWHISPER_EXPORT_ROOT` | `~/Documents/superwhisper_exports` | Where export bundles are written |
+| `SUPERWHISPER_MODES_DIR` | `~/Documents/superwhisper/modes` | Superwhisper's live modes directory |
+| `SUPERWHISPER_SETTINGS_PATH` | `~/Documents/superwhisper/settings/settings.json` | Superwhisper's settings file |
+
+**`mode_specs.json`** — declarative mode configuration. Defines each custom mode's key, name, prompt file, language model, and voice model. Edit `prompts/*.md` files to change prompt text; run `sync_superwhisper_modes.py` to deploy.
+
+For machine-specific path overrides without touching `mode_specs.json`, create `mode_specs.local.json` (gitignored) with your local paths — or use env vars.
+
+## Requirements
+
+- Python 3.11+ (standard library only, no pip installs required)
+- macOS with [Superwhisper](https://superwhisper.com/) installed
+- Superwhisper must be running during `run_superwhisper_queue.py` — the script drives the live app via `open` URL handlers
+
+## Limitations
+
+- macOS only. The queue runner uses `open superwhisper://` URL schemes and the Superwhisper app itself.
+- `run_superwhisper_queue.py` requires Superwhisper to be open and responsive. It polls for new recordings by watching the recordings folder — if the app is slow or the LLM rewrite takes longer than `--timeout-seconds`, tasks will time out.
+- The heuristic scorer is a proxy, not a judge. It measures recall and structure, not semantic quality. Read the side-by-side HTML; don't just sort by score.
+- Tested with Superwhisper's current folder layout. If Superwhisper changes its internal storage structure, the path assumptions in `common.py` may need updating.
+- Run folders and comparison outputs are excluded from git. They can get large quickly if you run many modes over large corpora.
+
+## Running Tests
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+## License
+
+MIT

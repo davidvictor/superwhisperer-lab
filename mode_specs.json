@@ -1,6 +1,6 @@
 {
-  "superwhisper_modes_dir": "/Users/davidvictor/Dropbox/My Mac (Superfly.attlocal.net)/Documents/superwhisper/modes",
-  "superwhisper_settings_path": "/Users/davidvictor/Dropbox/My Mac (Superfly.attlocal.net)/Documents/superwhisper/settings/settings.json",
+  "superwhisper_modes_dir": "~/Documents/superwhisper/modes",
+  "superwhisper_settings_path": "~/Documents/superwhisper/settings/settings.json",
   "built_in_mode_keys": [
     "default",
     "message",
