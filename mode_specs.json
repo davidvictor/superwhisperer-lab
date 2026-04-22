@@ -1,0 +1,58 @@
+{
+  "superwhisper_modes_dir": "/Users/davidvictor/Dropbox/My Mac (Superfly.attlocal.net)/Documents/superwhisper/modes",
+  "defaults": {
+    "activationApps": [],
+    "activationSites": [],
+    "autocapitalizeInsert": true,
+    "contextFromActiveApplication": false,
+    "contextFromClipboard": false,
+    "contextFromSelection": false,
+    "contextTemplate": "Use the copied text as context to complete this task.\n\nCopied text: ",
+    "diarize": false,
+    "iconName": "",
+    "literalPunctuation": false,
+    "promptExamples": [],
+    "realtimeOutput": false,
+    "script": "",
+    "scriptEnabled": false,
+    "translateToEnglish": false,
+    "useSystemAudio": false,
+    "version": 1,
+    "voiceModelID": "sw-ultra-cloud-v1-east"
+  },
+  "modes": [
+    {
+      "file_name": "engineering.json",
+      "key": "engineering",
+      "name": "Engineering",
+      "description": "Direct, execution-oriented engineering dictation.",
+      "type": "custom",
+      "language": "en",
+      "languageModelID": "gpt-5.3-chat-latest",
+      "voiceModelID": "sw-ultra-cloud-v1-east",
+      "prompt_markdown": "prompts/engineering-mode.md"
+    },
+    {
+      "file_name": "productdesign.json",
+      "key": "productdesign",
+      "name": "Product Design",
+      "description": "Clear product and UX thinking from spoken dictation.",
+      "type": "custom",
+      "language": "en",
+      "languageModelID": "claude-sonnet-4-6",
+      "voiceModelID": "sw-ultra-cloud-v1-east",
+      "prompt_markdown": "prompts/product-design-mode.md"
+    },
+    {
+      "file_name": "emailcommunication.json",
+      "key": "emailcommunication",
+      "name": "Email Communication",
+      "description": "Direct, warm email drafting from spoken dictation.",
+      "type": "custom",
+      "language": "en",
+      "languageModelID": "claude-sonnet-4-6",
+      "voiceModelID": "sw-ultra-cloud-v1-east",
+      "prompt_markdown": "prompts/email-communication-mode.md"
+    }
+  ]
+}

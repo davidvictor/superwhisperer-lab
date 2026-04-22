@@ -1,0 +1,14 @@
+[project]
+name = "superwhisperer-lab"
+version = "0.1.0"
+description = "Private tooling for exporting, replaying, and comparing Superwhisper transcript modes."
+requires-python = ">=3.11"
+
+[tool.setuptools]
+py-modules = [
+  "common",
+  "export_superwhisper_history",
+  "sync_superwhisper_modes",
+  "run_superwhisper_queue",
+  "evaluate_superwhisper_run",
+]
