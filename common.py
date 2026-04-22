@@ -39,6 +39,20 @@ DEFAULT_MODES_DIR = Path(
     )
 )
 
+DEFAULT_SETTINGS_PATH = Path(
+    os.environ.get(
+        "SUPERWHISPER_SETTINGS_PATH",
+        "/Users/davidvictor/Dropbox/My Mac (Superfly.attlocal.net)/Documents/superwhisper/settings/settings.json",
+    )
+)
+
+DEFAULT_BUILT_IN_MODE_KEYS = [
+    "default",
+    "message",
+    "mail",
+    "super",
+]
+
 
 def normalize_text(value: Any) -> str:
     if value is None:
@@ -117,6 +131,10 @@ def load_mode_config(config_path: Path) -> dict[str, Any]:
     config_dir = config_path.parent
 
     modes_dir = Path(config.get("superwhisper_modes_dir", DEFAULT_MODES_DIR)).expanduser()
+    settings_path = Path(
+        config.get("superwhisper_settings_path", DEFAULT_SETTINGS_PATH)
+    ).expanduser()
+    built_in_mode_keys = list(config.get("built_in_mode_keys", DEFAULT_BUILT_IN_MODE_KEYS))
     defaults = dict(config.get("defaults", {}))
     modes = []
 
@@ -132,6 +150,8 @@ def load_mode_config(config_path: Path) -> dict[str, Any]:
         "config_path": config_path,
         "config_dir": config_dir,
         "superwhisper_modes_dir": modes_dir,
+        "superwhisper_settings_path": settings_path,
+        "built_in_mode_keys": built_in_mode_keys,
         "defaults": defaults,
         "modes": modes,
     }
@@ -212,3 +232,27 @@ def sanitize_filename(value: str) -> str:
             safe.append("-")
     collapsed = "".join(safe).strip("-")
     return collapsed or "item"
+
+
+def unique_preserving_order(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    output: list[str] = []
+    for value in values:
+        if value in seen:
+            continue
+        seen.add(value)
+        output.append(value)
+    return output
+
+
+def render_settings_json(
+    existing_settings: dict[str, Any],
+    built_in_mode_keys: list[str],
+    custom_mode_keys: list[str],
+) -> dict[str, Any]:
+    payload = dict(existing_settings)
+    existing_mode_keys = list(payload.get("modeKeys", []))
+    payload["modeKeys"] = unique_preserving_order(
+        existing_mode_keys + built_in_mode_keys + custom_mode_keys
+    )
+    return payload
