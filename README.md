@@ -26,7 +26,7 @@ Instead of testing prompt changes against synthetic examples, this tooling repla
 
 The longer goal is a periodic self-improvement loop: export a fresh slice of recent recordings, run them through your current mode set, score and compare, tune the prompts, repeat. Each iteration tightens alignment between how you actually speak and how your modes render it.
 
-Built during a focused lab sprint, published because the workflow generalizes to anyone running custom Superwhisper modes seriously.
+Built during a focused lab sprint using Codex, published because the workflow generalizes to anyone running custom Superwhisper modes seriously.
 
 ## What It Does
 
@@ -87,6 +87,8 @@ python3 run_superwhisper_queue.py --sample-mode recent --limit 25 --mode-key eng
 ```
 
 Run once per mode. Each mode gets its own run folder under `runs/`.
+
+Warning: live replay runs drive the real Superwhisper desktop app through the macOS UI. While a batch is running, the machine is largely unusable for normal work.
 
 **5. Compare runs**
 
@@ -151,19 +153,35 @@ For machine-specific path overrides without touching `mode_specs.json`, create `
 - macOS with [Superwhisper](https://superwhisper.com/) installed
 - Superwhisper must be running during `run_superwhisper_queue.py` — the script drives the live app via `open` URL handlers
 
+This repo does **not** require Codex or Codex Computer Use to function. The runtime dependency is just Python plus the local Superwhisper app on macOS.
+
 ## Limitations
 
 - macOS only. The queue runner uses `open superwhisper://` URL schemes and the Superwhisper app itself.
 - `run_superwhisper_queue.py` requires Superwhisper to be open and responsive. It polls for new recordings by watching the recordings folder — if the app is slow or the LLM rewrite takes longer than `--timeout-seconds`, tasks will time out.
+- Live replay runs interact with the desktop UI only. They switch modes and submit audio through the app itself, so the computer is largely unusable while a batch is in progress.
 - The heuristic scorer is a proxy, not a judge. It measures recall and structure, not semantic quality. Read the side-by-side HTML; don't just sort by score.
+- End-to-end live replay runs have only been tested from the Codex desktop app on macOS. The repository itself is not Codex-specific, but other automation environments have not been validated to the same degree.
 - Tested with Superwhisper's current folder layout. If Superwhisper changes its internal storage structure, the path assumptions in `common.py` may need updating.
 - Run folders and comparison outputs are excluded from git. They can get large quickly if you run many modes over large corpora.
 
-## Running Tests
+## Running Unit Tests
 
 ```bash
 python3 -m unittest discover -s tests -v
 ```
+
+These are pure-Python unit tests. They do **not** drive the Superwhisper UI and they do **not** take over the desktop.
+
+## Running Live Replay Batches
+
+Commands like the following are operational replay runs, not unit tests:
+
+```bash
+python3 run_superwhisper_queue.py --sample-mode recent --limit 25 --mode-key engineering
+```
+
+These runs drive the live Superwhisper app through the macOS UI. Expect the desktop to be effectively occupied until the batch finishes.
 
 ## License
 
