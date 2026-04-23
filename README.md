@@ -8,7 +8,7 @@
 
 # superwhisper-lab
 
-> A CLI toolkit for benchmarking Superwhisper custom modes against your own voice recording history — export, replay, score, and compare prompt outputs side by side.
+> A CLI toolkit for anyone taking Superwhisper custom modes seriously: export your real recording history, replay prompts through the live app, score the results, and compare outputs side by side.
 
 ## The Problem
 
@@ -16,17 +16,13 @@
 
 The feedback loop is broken. You dictate, glance at the output, and move on. You might notice a mode feels better, or worse, but you have no systematic way to verify that impression across a real corpus of your own speech. Tweaking a prompt feels like adjusting in the dark.
 
-The second problem is operational: Superwhisper's mode deployment has two steps — write the mode JSON file, then register the mode key in `settings.json`. Miss the second step and your mode silently disappears from the UI. There's no built-in way to manage this from editable source files.
-
 ## Why I Built This
 
-The insight behind this repo is simple: you already have the eval corpus. Every recording you've ever made is sitting in Superwhisper's local history, with the raw transcript, the rewritten output, the mode name, and the audio file. That's a ground-truth dataset of your actual voice patterns.
+The insight behind this repo is simple: you already have the eval corpus. Every recording you've ever made is sitting in Superwhisper's local history, with the raw transcript, the rewritten output, the mode name, and the audio file. That's a real-world eval corpus built from your actual voice patterns.
 
 Instead of testing prompt changes against synthetic examples, this tooling replays your real recordings through the Superwhisper app itself, one mode at a time, then scores the outputs using a deterministic heuristic that measures content recall, filler removal, length appropriateness, and structural quality. The score isn't a substitute for reading the output — it's a signal that tells you where to look in the side-by-side comparison.
 
-The longer goal is a periodic self-improvement loop: export a fresh slice of recent recordings, run them through your current mode set, score and compare, tune the prompts, repeat. Each iteration tightens alignment between how you actually speak and how your modes render it.
-
-Built during a focused lab sprint using Codex, published because the workflow generalizes to anyone running custom Superwhisper modes seriously.
+That makes the workflow useful beyond this repo: anyone taking Superwhisper modes seriously can use their own history to evaluate whether a mode is improving, not just whether it feels better in the moment.
 
 ## What It Does
 
@@ -34,7 +30,7 @@ Four scripts, each with a distinct job:
 
 - **`export_superwhisper_history.py`** — Walks Superwhisper's local recordings folder and exports your history to JSONL, CSV, and per-recording Markdown files. Produces a timestamped export bundle you can use as a stable eval corpus.
 
-- **`sync_superwhisper_modes.py`** — Reads `mode_specs.json` and the prompt Markdown files, writes the live Superwhisper mode JSON files, and updates `settings.json` `modeKeys` so modes appear in the UI. Handles both steps atomically.
+- **`sync_superwhisper_modes.py`** — Reads `mode_specs.json` and prompt Markdown, writes live Superwhisper mode JSON files, and keeps local mode settings aligned.
 
 - **`run_superwhisper_queue.py`** — Drives the real Superwhisper desktop app to reprocess audio files one mode at a time. Matches output recordings by duration and raw transcript fingerprint. Writes a JSONL results log and per-task Markdown outputs.
 
@@ -70,7 +66,7 @@ cp env.example .env
 python3 sync_superwhisper_modes.py
 ```
 
-This writes the mode JSON files and registers them in `settings.json`. If Superwhisper is open, quit and reopen it after syncing.
+This writes the live mode JSON files from editable prompt sources. Restart Superwhisper if changes do not appear immediately.
 
 **3. Export your recording history**
 
@@ -99,7 +95,7 @@ python3 evaluate_superwhisper_run.py \
   runs/run-emailcommunication
 ```
 
-Writes to `comparisons/compare-YYYYMMDD-HHMMSS__*/`:
+Writes to `comparisons/compare-YYYYMMDD-HHMMSS__<run-names>/`:
 
 - `side_by_side.html` — full comparison table, one row per source recording
 - `heuristic_summary.json` — per-mode and per-run average scores
@@ -157,13 +153,12 @@ This repo does **not** require Codex or Codex Computer Use to function. The runt
 
 ## Limitations
 
-- macOS only. The queue runner uses `open superwhisper://` URL schemes and the Superwhisper app itself.
-- `run_superwhisper_queue.py` requires Superwhisper to be open and responsive. It polls for new recordings by watching the recordings folder — if the app is slow or the LLM rewrite takes longer than `--timeout-seconds`, tasks will time out.
-- Live replay runs interact with the desktop UI only. They switch modes and submit audio through the app itself, so the computer is largely unusable while a batch is in progress.
-- The heuristic scorer is a proxy, not a judge. It measures recall and structure, not semantic quality. Read the side-by-side HTML; don't just sort by score.
-- End-to-end live replay runs have only been tested from the Codex desktop app on macOS. The repository itself is not Codex-specific, but other automation environments have not been validated to the same degree.
-- Tested with Superwhisper's current folder layout. If Superwhisper changes its internal storage structure, the path assumptions in `common.py` may need updating.
-- Run folders and comparison outputs are excluded from git. They can get large quickly if you run many modes over large corpora.
+- macOS + local Superwhisper only. Live replay uses the installed Superwhisper app and `superwhisper://` URL handlers.
+- Live replay occupies the desktop. `run_superwhisper_queue.py` switches modes and submits audio through the app, so expect the machine to be tied up while a batch is running.
+- Replay depends on app responsiveness. The runner watches the recordings folder for new results and can time out if Superwhisper or the LLM rewrite is slow; adjust `--timeout-seconds` for longer jobs.
+- Scores are triage signals, not judgments. The heuristic measures recall, cleanup, length, structure, and repetition; use `side_by_side.html` for final evaluation.
+- Path assumptions track Superwhisper's current local folder layout. If the app changes its storage format, `common.py` and the default paths may need updates.
+- Runs and comparisons can get large. They are intentionally gitignored.
 
 ## Running Unit Tests
 
@@ -180,8 +175,6 @@ Commands like the following are operational replay runs, not unit tests:
 ```bash
 python3 run_superwhisper_queue.py --sample-mode recent --limit 25 --mode-key engineering
 ```
-
-These runs drive the live Superwhisper app through the macOS UI. Expect the desktop to be effectively occupied until the batch finishes.
 
 ## License
 
