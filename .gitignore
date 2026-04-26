@@ -26,3 +26,4 @@ mode_specs.local.json
 
 # Local tooling state
 .omc/
+.omx/

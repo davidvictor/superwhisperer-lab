@@ -10,6 +10,8 @@
 
 > A CLI toolkit for anyone taking Superwhisper custom modes seriously: export your real recording history, replay prompts through the live app, score the results, and compare outputs side by side.
 
+![Superwhisper Lab workflow: recordings, prompt modes, live replay, scoring, and side-by-side comparison](assets/superwhisper-lab-workflow.png)
+
 ## The Problem
 
 [Superwhisper](https://superwhisper.com/) lets you define custom modes: different LLM prompts that rewrite your dictation for different contexts — engineering notes, product thinking, email drafts. Writing a prompt is easy. Knowing whether it's actually working is not.
