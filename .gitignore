@@ -17,6 +17,7 @@ venv/
 runs/
 comparisons/
 exports/
+docs/
 
 # Local config overrides
 mode_specs.local.json

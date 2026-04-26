@@ -40,6 +40,17 @@
       "prompt_markdown": "prompts/engineering-mode.md"
     },
     {
+      "file_name": "productengineeringtranslator.json",
+      "key": "productengineeringtranslator",
+      "name": "Product Engineering Translator",
+      "description": "Compact cross-functional builder briefs from long-form dictation.",
+      "type": "custom",
+      "language": "en",
+      "languageModelID": "gpt-5.3-chat-latest",
+      "voiceModelID": "sw-ultra-cloud-v1-east",
+      "prompt_markdown": "prompts/product-engineering-translator-mode.md"
+    },
+    {
       "file_name": "productdesign.json",
       "key": "productdesign",
       "name": "Product Design",
