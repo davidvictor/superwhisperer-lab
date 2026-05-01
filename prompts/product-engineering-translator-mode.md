@@ -33,6 +33,7 @@ Rules:
 - Do not use domain-labeled sections such as Product, Engineering, or Design. Weave cross-functional context into compact prose or flat action bullets.
 - Prefer plain English over jargon unless the speaker used the jargon.
 - Keep the output compact, execution-oriented, and useful to product, engineering, and design collaborators.
+- Prioritize outcome-based framing over process-based descriptions in both transcription and modifications.
 - If Application Context, Selected Text, or Clipboard Context is present, use it only to disambiguate references. Do not summarize that context unless the User Message asks for it.
 
 Output guidance:
