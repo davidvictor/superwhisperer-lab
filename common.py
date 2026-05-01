@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import random
 import re
@@ -14,6 +15,8 @@ LAB_DIR = Path(__file__).resolve().parent
 DEFAULT_CONFIG_PATH = LAB_DIR / "mode_specs.json"
 DEFAULT_RUNS_DIR = LAB_DIR / "runs"
 DEFAULT_COMPARISONS_DIR = LAB_DIR / "comparisons"
+DEFAULT_CORPORA_DIR = LAB_DIR / "corpora"
+DEFAULT_JUDGE_RUNS_DIR = LAB_DIR / "judge_runs"
 
 DEFAULT_RECORDINGS_CANDIDATES = [
     Path(
@@ -74,6 +77,18 @@ def write_json(path: Path, payload: Any) -> None:
         handle.write("\n")
 
 
+def canonical_json(value: Any) -> str:
+    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+def stable_hash(value: Any) -> str:
+    return hashlib.sha256(canonical_json(value).encode("utf-8")).hexdigest()
+
+
+def text_hash(value: Any) -> str:
+    return stable_hash(normalize_text(value))
+
+
 def load_jsonl(path: Path) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
     with path.open("r", encoding="utf-8") as handle:
@@ -83,6 +98,13 @@ def load_jsonl(path: Path) -> list[dict[str, Any]]:
                 continue
             records.append(json.loads(line))
     return records
+
+
+def write_jsonl(path: Path, records: list[dict[str, Any]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as handle:
+        for record in records:
+            handle.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
 def append_jsonl(path: Path, payload: dict[str, Any]) -> None:
@@ -135,6 +157,7 @@ def load_mode_config(config_path: Path) -> dict[str, Any]:
         config.get("superwhisper_settings_path", DEFAULT_SETTINGS_PATH)
     ).expanduser()
     built_in_mode_keys = list(config.get("built_in_mode_keys", DEFAULT_BUILT_IN_MODE_KEYS))
+    deprecated_custom_mode_keys = list(config.get("deprecated_custom_mode_keys", []))
     defaults = dict(config.get("defaults", {}))
     modes = []
 
@@ -152,6 +175,7 @@ def load_mode_config(config_path: Path) -> dict[str, Any]:
         "superwhisper_modes_dir": modes_dir,
         "superwhisper_settings_path": settings_path,
         "built_in_mode_keys": built_in_mode_keys,
+        "deprecated_custom_mode_keys": deprecated_custom_mode_keys,
         "defaults": defaults,
         "modes": modes,
     }
@@ -245,13 +269,109 @@ def unique_preserving_order(values: list[str]) -> list[str]:
     return output
 
 
+PRODUCT_BUILDER_NAMES = {
+    "Product Engineering Translator",
+    "Product Builder",
+}
+
+
+def is_product_builder_name(value: Any) -> bool:
+    return normalize_text(value) in PRODUCT_BUILDER_NAMES
+
+
+def context_surface_from_app_info(app_info: Any) -> str:
+    if not isinstance(app_info, dict):
+        return "unknown"
+    text_input_format = normalize_text(app_info.get("textInputFormat"))
+    if text_input_format == "code":
+        return "code_editor"
+    if text_input_format == "chat_message":
+        return "ai_chat"
+    if text_input_format == "url":
+        return "browser_url"
+    return "unknown"
+
+
+def text_length_bucket(text: Any) -> str:
+    length = len(normalize_text(text))
+    if length == 0:
+        return "empty"
+    if length <= 80:
+        return "short"
+    if length <= 500:
+        return "medium"
+    if length <= 1200:
+        return "long"
+    return "very_long"
+
+
+def extract_prompt_context(meta: dict[str, Any]) -> dict[str, Any]:
+    prompt_context = meta.get("promptContext")
+    return prompt_context if isinstance(prompt_context, dict) else {}
+
+
+def summarize_prompt_context(prompt_context: dict[str, Any]) -> dict[str, Any]:
+    app_context = prompt_context.get("applicationContext")
+    if not isinstance(app_context, dict):
+        app_context = {}
+
+    app_info = app_context.get("appInfo")
+    if not isinstance(app_info, dict):
+        app_info = {}
+
+    nouns = app_context.get("nouns")
+    if not isinstance(nouns, list):
+        nouns = []
+
+    focused_content = normalize_text(app_context.get("focusedElementContent"))
+    focused_description = normalize_text(app_context.get("focusedElementDescription"))
+    selected_text = normalize_text(app_context.get("selectedText"))
+    url = normalize_text(app_context.get("url"))
+    active_app = normalize_text(app_context.get("name")) or "unknown"
+
+    return {
+        "active_app": active_app,
+        "app_category": normalize_text(app_info.get("category")) or "unknown",
+        "text_input_format": normalize_text(app_info.get("textInputFormat")) or "unknown",
+        "context_surface": context_surface_from_app_info(app_info),
+        "include_in_prompt": app_context.get("includeInPrompt"),
+        "has_application_context": bool(app_context),
+        "has_app_info": bool(app_info),
+        "focused_element_content_length": len(focused_content),
+        "focused_element_description_length": len(focused_description),
+        "has_focused_element_content": bool(focused_content),
+        "has_focused_element_description": bool(focused_description),
+        "selected_text_length": len(selected_text),
+        "has_selected_text": bool(selected_text),
+        "url": url,
+        "has_url": bool(url),
+        "nouns_count": len(nouns),
+        "has_nouns": bool(nouns),
+    }
+
+
+def build_record_hashes(meta: dict[str, Any]) -> dict[str, str]:
+    prompt_context = extract_prompt_context(meta)
+    return {
+        "raw_result_hash": text_hash(meta.get("rawResult")),
+        "llm_result_hash": text_hash(meta.get("llmResult")),
+        "result_hash": text_hash(meta.get("result")),
+        "prompt_hash": text_hash(meta.get("prompt")),
+        "prompt_context_hash": stable_hash(prompt_context),
+    }
+
+
 def render_settings_json(
     existing_settings: dict[str, Any],
     built_in_mode_keys: list[str],
     custom_mode_keys: list[str],
+    deprecated_mode_keys: list[str] | None = None,
 ) -> dict[str, Any]:
     payload = dict(existing_settings)
-    existing_mode_keys = list(payload.get("modeKeys", []))
+    deprecated = set(deprecated_mode_keys or [])
+    existing_mode_keys = [
+        mode_key for mode_key in payload.get("modeKeys", []) if mode_key not in deprecated
+    ]
     payload["modeKeys"] = unique_preserving_order(
         existing_mode_keys + built_in_mode_keys + custom_mode_keys
     )

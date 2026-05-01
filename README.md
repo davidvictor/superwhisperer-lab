@@ -28,7 +28,7 @@ That makes the workflow useful beyond this repo: anyone taking Superwhisper mode
 
 ## What It Does
 
-Four scripts, each with a distinct job:
+Core scripts, each with a distinct job:
 
 - **`export_superwhisper_history.py`** — Walks Superwhisper's local recordings folder and exports your history to JSONL, CSV, and per-recording Markdown files. Produces a timestamped export bundle you can use as a stable eval corpus.
 
@@ -37,6 +37,10 @@ Four scripts, each with a distinct job:
 - **`run_superwhisper_queue.py`** — Drives the real Superwhisper desktop app to reprocess audio files one mode at a time. Matches output recordings by duration and raw transcript fingerprint. Writes a JSONL results log and per-task Markdown outputs.
 
 - **`evaluate_superwhisper_run.py`** — Rehydrates results from live `meta.json` files, scores each output against the source transcript on six heuristic dimensions, and generates a side-by-side HTML comparison across all modes in a run.
+
+- **`export_product_builder_corpus.py`** — Exports the context-rich Product Builder corpus from live Superwhisper history. It preserves full `promptContext`, active app metadata, focused element context, prompt text, hashes, and candidate outputs for LLM judging.
+
+- **`judge_product_builder_corpus.py`** — Runs a resumable Codex CLI LLM-as-judge pass over the Product Builder corpus in chunks. It writes generated state, scores, summaries, failure patterns, and prompt recommendations under `judge_runs/`.
 
 ## How It Works
 
@@ -129,6 +133,22 @@ python3 run_superwhisper_queue.py --sample-mode random --limit 20 --mode-key pro
 ```bash
 python3 evaluate_superwhisper_run.py runs/run-engineering
 ```
+
+**Export the Product Builder judge corpus:**
+
+```bash
+python3 export_product_builder_corpus.py
+```
+
+This writes a generated corpus under `corpora/` and keeps full Superwhisper context from each `meta.json` record.
+
+**Judge one Product Builder chunk with Codex CLI:**
+
+```bash
+python3 judge_product_builder_corpus.py --chunk-size 25
+```
+
+The judge resumes from existing scores in the selected run directory. Use `--run-dir judge_runs/<run>` to continue a specific run.
 
 ## Configuration
 

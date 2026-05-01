@@ -64,6 +64,7 @@ def main() -> None:
         existing_settings=existing_settings,
         built_in_mode_keys=config["built_in_mode_keys"],
         custom_mode_keys=[mode["key"] for mode in selected_modes],
+        deprecated_mode_keys=config["deprecated_custom_mode_keys"],
     )
 
     if args.dry_run:

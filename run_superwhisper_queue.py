@@ -13,7 +13,9 @@ from common import (
     DEFAULT_CONFIG_PATH,
     DEFAULT_RUNS_DIR,
     append_jsonl,
+    build_record_hashes,
     choose_default_recordings_dir,
+    extract_prompt_context,
     latest_export_jsonl,
     load_json,
     load_jsonl,
@@ -22,6 +24,7 @@ from common import (
     render_mode_json,
     sanitize_filename,
     select_source_records,
+    summarize_prompt_context,
     write_json,
 )
 
@@ -130,6 +133,12 @@ def load_meta(path: Path) -> dict[str, Any] | None:
 
 def build_task(source_record: dict[str, Any], mode: dict[str, Any]) -> dict[str, Any]:
     task_id = f"{source_record['recording_id']}__{mode['key']}"
+    source_context = source_record.get("context_raw") or source_record.get("prompt_context") or {}
+    source_context_summary = (
+        source_record.get("context_summary")
+        if isinstance(source_record.get("context_summary"), dict)
+        else summarize_prompt_context(source_context if isinstance(source_context, dict) else {})
+    )
     return {
         "task_id": task_id,
         "source_recording_id": source_record["recording_id"],
@@ -138,12 +147,23 @@ def build_task(source_record: dict[str, Any], mode: dict[str, Any]) -> dict[str,
         "source_meta_path": source_record["meta_path"],
         "source_mode_name": source_record.get("mode_name"),
         "source_raw_result": source_record.get("raw_result", ""),
+        "source_llm_result": source_record.get("llm_result", ""),
         "source_result": source_record.get("result", ""),
         "source_duration_seconds": source_record.get("duration_seconds"),
+        "source_prompt": source_record.get("prompt", ""),
+        "source_prompt_context": source_context,
+        "source_context_raw": source_context,
+        "source_context_summary": source_context_summary,
+        "source_raw_result_hash": source_record.get("raw_result_hash", ""),
+        "source_llm_result_hash": source_record.get("llm_result_hash", ""),
+        "source_result_hash": source_record.get("result_hash", ""),
+        "source_prompt_hash": source_record.get("prompt_hash", ""),
+        "source_prompt_context_hash": source_record.get("prompt_context_hash", ""),
         "mode_key": mode["key"],
         "mode_name": mode["name"],
         "mode_file_name": mode["file_name"],
         "prompt_markdown_path": str(mode["prompt_markdown_path"]),
+        "prompt_text": mode.get("prompt_text", ""),
         "language_model_id": mode.get("languageModelID", ""),
         "voice_model_id": mode.get("voiceModelID", ""),
     }
@@ -193,6 +213,8 @@ def match_new_recording(
                 continue
 
             raw_result = normalize_text(meta.get("rawResult"))
+            prompt_context = extract_prompt_context(meta)
+            hashes = build_record_hashes(meta)
             duration = meta.get("duration")
             duration_match = False
             if source_duration is not None and duration is not None:
@@ -209,11 +231,19 @@ def match_new_recording(
                 "output_datetime": normalize_text(meta.get("datetime")),
                 "output_mode_name": mode_name,
                 "output_model_name": normalize_text(meta.get("modelName")),
+                "output_model_key": normalize_text(meta.get("modelKey")),
                 "output_language_model_name": normalize_text(meta.get("languageModelName")),
+                "output_language_model_key": normalize_text(meta.get("languageModelKey")),
+                "output_app_version": normalize_text(meta.get("appVersion")),
+                "output_prompt": normalize_text(meta.get("prompt")),
+                "output_prompt_context": prompt_context,
+                "output_context_raw": prompt_context,
+                "output_context_summary": summarize_prompt_context(prompt_context),
                 "output_raw_result": raw_result,
                 "output_llm_result": normalize_text(meta.get("llmResult")),
                 "output_result": normalize_text(meta.get("result")),
                 "output_duration_seconds": duration,
+                **{f"output_{key}": value for key, value in hashes.items()},
                 "raw_text_exact_match": raw_result == source_raw,
                 "duration_match": duration_match,
             }

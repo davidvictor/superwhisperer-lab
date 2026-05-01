@@ -67,6 +67,16 @@ class TestRenderSettingsJson(unittest.TestCase):
         self.assertEqual(result["modeKeys"].count("default"), 1)
         self.assertEqual(result["modeKeys"].count("engineering"), 1)
 
+    def test_removes_deprecated_mode_keys(self):
+        result = render_settings_json(
+            existing_settings={"modeKeys": ["default", "productengineeringtranslator"]},
+            built_in_mode_keys=["default"],
+            custom_mode_keys=["productbuilder"],
+            deprecated_mode_keys=["productengineeringtranslator"],
+        )
+
+        self.assertEqual(result["modeKeys"], ["default", "productbuilder"])
+
     def test_preserves_other_settings(self):
         result = render_settings_json(
             existing_settings={"modeKeys": [], "someOtherKey": "value"},

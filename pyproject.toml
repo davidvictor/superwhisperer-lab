@@ -11,4 +11,6 @@ py-modules = [
   "sync_superwhisper_modes",
   "run_superwhisper_queue",
   "evaluate_superwhisper_run",
+  "export_product_builder_corpus",
+  "judge_product_builder_corpus",
 ]

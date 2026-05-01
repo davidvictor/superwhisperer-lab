@@ -7,6 +7,9 @@
     "mail",
     "super"
   ],
+  "deprecated_custom_mode_keys": [
+    "productengineeringtranslator"
+  ],
   "defaults": {
     "activationApps": [],
     "activationSites": [],
@@ -40,15 +43,29 @@
       "prompt_markdown": "prompts/engineering-mode.md"
     },
     {
-      "file_name": "productengineeringtranslator.json",
-      "key": "productengineeringtranslator",
-      "name": "Product Engineering Translator",
-      "description": "Compact cross-functional builder briefs from long-form dictation.",
+      "file_name": "productbuilder.json",
+      "key": "productbuilder",
+      "name": "Product Builder",
+      "description": "Precise product, design, and engineering language from spoken builder dictation.",
       "type": "custom",
       "language": "en",
       "languageModelID": "gpt-5.3-chat-latest",
       "voiceModelID": "sw-ultra-cloud-v1-east",
-      "prompt_markdown": "prompts/product-engineering-translator-mode.md"
+      "activationApps": [
+        "Codex",
+        "Claude",
+        "Terminal"
+      ],
+      "activationSites": [
+        "https://aistudio.google.com/",
+        "http://localhost/",
+        "localhost",
+        "aistudio.google.com"
+      ],
+      "contextFromActiveApplication": true,
+      "contextFromClipboard": true,
+      "contextFromSelection": true,
+      "prompt_markdown": "prompts/product-builder.md"
     },
     {
       "file_name": "productdesign.json",

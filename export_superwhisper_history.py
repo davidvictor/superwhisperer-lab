@@ -11,6 +11,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from common import build_record_hashes, extract_prompt_context, summarize_prompt_context, text_length_bucket
+
 
 DEFAULT_RECORDINGS_CANDIDATES = [
     Path(
@@ -98,6 +100,9 @@ def build_record(folder: Path, meta: dict[str, Any]) -> dict[str, Any]:
     llm_result = normalize_text(meta.get("llmResult"))
     result = normalize_text(meta.get("result"))
     dt = normalize_text(meta.get("datetime"))
+    prompt_context = extract_prompt_context(meta)
+    context_summary = summarize_prompt_context(prompt_context)
+    hashes = build_record_hashes(meta)
 
     return {
         "recording_id": folder.name,
@@ -112,9 +117,29 @@ def build_record(folder: Path, meta: dict[str, Any]) -> dict[str, Any]:
         "recording_device": normalize_text(meta.get("recordingDevice")),
         "system_audio_enabled": bool(meta.get("systemAudioEnabled", False)),
         "separate_speakers_enabled": bool(meta.get("separateSpeakersEnabled", False)),
+        "app_version": normalize_text(meta.get("appVersion")),
+        "processing_time": meta.get("processingTime"),
+        "language_model_processing_time": meta.get("languageModelProcessingTime"),
+        "application_context_enabled": meta.get("applicationContextEnabled"),
+        "literal_punctuation_enabled": meta.get("literalPunctuationEnabled"),
+        "realtime_enabled": meta.get("realtimeEnabled"),
+        "translation_enabled": meta.get("translationEnabled"),
+        "prompt": normalize_text(meta.get("prompt")),
+        "prompt_context": prompt_context,
+        "context_raw": prompt_context,
+        "context_summary": context_summary,
+        "context_active_app": context_summary["active_app"],
+        "context_surface": context_summary["context_surface"],
+        "context_app_category": context_summary["app_category"],
+        "context_text_input_format": context_summary["text_input_format"],
+        "context_has_focused_element_content": context_summary["has_focused_element_content"],
+        "context_has_selected_text": context_summary["has_selected_text"],
+        "context_has_url": context_summary["has_url"],
+        "raw_result_length_bucket": text_length_bucket(raw_result),
         "raw_result": raw_result,
         "llm_result": llm_result,
         "result": result,
+        **hashes,
         "recording_folder": str(folder),
         "audio_path": str(folder / "output.wav"),
         "meta_path": str(folder / "meta.json"),

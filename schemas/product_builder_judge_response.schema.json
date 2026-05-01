@@ -1,0 +1,90 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "scores",
+    "confidence",
+    "failure_tags",
+    "rationale",
+    "recommendation_category",
+    "prompt_recommendation"
+  ],
+  "properties": {
+    "scores": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "intent_fidelity",
+        "technical_specificity",
+        "design_product_fidelity",
+        "context_usefulness",
+        "actionability",
+        "noise_removal",
+        "non_invention"
+      ],
+      "properties": {
+        "intent_fidelity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "technical_specificity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "design_product_fidelity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "context_usefulness": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "actionability": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "noise_removal": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "non_invention": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        }
+      }
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "failure_tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "rationale": {
+      "type": "string"
+    },
+    "recommendation_category": {
+      "type": "string",
+      "enum": [
+        "no_change",
+        "prompt_candidate",
+        "manual_review",
+        "exclude_from_eval"
+      ]
+    },
+    "prompt_recommendation": {
+      "type": "string"
+    }
+  }
+}

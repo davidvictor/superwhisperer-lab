@@ -17,7 +17,8 @@ venv/
 runs/
 comparisons/
 exports/
-docs/
+corpora/
+judge_runs/
 
 # Local config overrides
 mode_specs.local.json
