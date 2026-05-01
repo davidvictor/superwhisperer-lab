@@ -30,7 +30,7 @@
 - `python3 judge_product_builder_corpus.py --corpus-jsonl <corpus> --chunk-size 2 --dry-run` writes ignored judge state.
 - Judge runs default to `gpt-5.4` because this local Codex CLI rejects its own `gpt-5.5` default.
 - A real smoke judge run against a five-record corpus judged one record, skipped one empty record, and wrote no errors.
-- `python3 sync_superwhisper_modes.py --mode-key productbuilder` writes `productbuilder.json` and removes `productengineeringtranslator` from Superwhisper settings.
+- `python3 sync_superwhisper_modes.py --mode-key productbuilder` writes `productbuilder.json`, removes the deprecated `productengineeringtranslator.json` file, and removes `productengineeringtranslator` from Superwhisper settings.
 
 ## Prompt Hypotheses
 

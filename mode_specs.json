@@ -7,6 +7,12 @@
     "mail",
     "super"
   ],
+  "deprecated_custom_modes": [
+    {
+      "file_name": "productengineeringtranslator.json",
+      "key": "productengineeringtranslator"
+    }
+  ],
   "deprecated_custom_mode_keys": [
     "productengineeringtranslator"
   ],

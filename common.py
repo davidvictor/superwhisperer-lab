@@ -158,6 +158,7 @@ def load_mode_config(config_path: Path) -> dict[str, Any]:
     ).expanduser()
     built_in_mode_keys = list(config.get("built_in_mode_keys", DEFAULT_BUILT_IN_MODE_KEYS))
     deprecated_custom_mode_keys = list(config.get("deprecated_custom_mode_keys", []))
+    deprecated_custom_modes = list(config.get("deprecated_custom_modes", []))
     defaults = dict(config.get("defaults", {}))
     modes = []
 
@@ -175,6 +176,7 @@ def load_mode_config(config_path: Path) -> dict[str, Any]:
         "superwhisper_modes_dir": modes_dir,
         "superwhisper_settings_path": settings_path,
         "built_in_mode_keys": built_in_mode_keys,
+        "deprecated_custom_modes": deprecated_custom_modes,
         "deprecated_custom_mode_keys": deprecated_custom_mode_keys,
         "defaults": defaults,
         "modes": modes,

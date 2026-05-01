@@ -58,6 +58,20 @@ def main() -> None:
         write_json(output_path, payload)
         print(f"wrote {output_path}")
 
+    deprecated_files = [
+        config["superwhisper_modes_dir"] / mode["file_name"]
+        for mode in config["deprecated_custom_modes"]
+        if mode.get("file_name")
+    ]
+    for deprecated_file in deprecated_files:
+        if args.dry_run:
+            if deprecated_file.exists():
+                print(f"would_remove {deprecated_file}")
+            continue
+        if deprecated_file.exists():
+            deprecated_file.unlink()
+            print(f"removed {deprecated_file}")
+
     settings_path = config["superwhisper_settings_path"]
     existing_settings = load_json(settings_path) if settings_path.exists() else {}
     settings_payload = render_settings_json(
